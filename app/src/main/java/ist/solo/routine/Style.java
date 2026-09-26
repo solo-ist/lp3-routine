@@ -39,8 +39,11 @@ final class Style {
     static final long HAPTIC_MS = 40L;
 
     /**
-     * Step end: three firm pulses, long enough to notice in a pocket and
-     * unmistakably not a touch tick.
+     * Step end: eight firm pulses over ~4.6 s. Three pulses (1.2 s) proved too
+     * easy to miss in use. It stops the moment you open the player or tap
+     * anything in it, so its length only matters when you aren't looking.
      */
-    static final long[] STEP_END_WAVEFORM = {0, 300, 150, 300, 150, 300};
+    static final long[] STEP_END_WAVEFORM = {
+        0, 400, 200, 400, 200, 400, 200, 400, 200, 400, 200, 400, 200, 400, 200, 400,
+    };
 }

@@ -34,6 +34,16 @@ final class Haptics {
                 VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM));
     }
 
+    /**
+     * Stop a step-end buzz still playing. It has to be explicit: a touch tick
+     * does not supersede it, because Android ignores a TOUCH vibration while
+     * a higher-importance ALARM one is playing.
+     */
+    static void stop(Context c) {
+        Vibrator v = vibrator(c);
+        if (v != null) v.cancel();
+    }
+
     /** LightOS's haptics toggle. Defaults on if the setting is absent. */
     static boolean enabled(Context c) {
         return Settings.System.getInt(c.getContentResolver(), Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) != 0;

@@ -90,6 +90,7 @@ public class PlayerActivity extends Activity {
         }));
         plus = Ui.barButton(this, "+1", v -> addTime(MINUTE));
         plus.setOnLongClickListener(v -> {
+            Haptics.stop(this);
             Haptics.touch(this);
             addTime(5 * MINUTE);
             return true;
@@ -115,6 +116,7 @@ public class PlayerActivity extends Activity {
         super.onResume();
         visible = true;
         StepNotice.cancel(this);
+        Haptics.stop(this); // you're looking now; no need to keep buzzing
         if (new Prefs(this).keepScreenOn()) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         tick();

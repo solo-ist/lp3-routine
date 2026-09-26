@@ -54,6 +54,10 @@ final class Ui {
         b.setPadding(0, v, 0, v);
         b.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         b.setOnClickListener(view -> {
+            // A tap doesn't supersede the step-end buzz on its own: Android
+            // drops a TOUCH vibration while an ALARM one plays
+            // ("ignored_for_higher_importance"). Stop it explicitly.
+            Haptics.stop(c);
             Haptics.touch(c);
             onTap.onClick(view);
         });

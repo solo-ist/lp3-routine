@@ -13,8 +13,9 @@ most doesn't have to happen on the iPhone.
   - **skip**
   - **done**
   - **Back** asks whether to end the routine.
-- **When a step runs out** the phone buzzes (three firm pulses) whether the
-  screen is on or not. If the player isn't in front, a notification also
+- **When a step runs out** the phone buzzes, whether the screen is on or
+  not: eight firm pulses over about 5 s, cut short as soon as you open the
+  player or tap anything in it. If the player isn't in front, a notification also
   appears. LightOS has no shade, but Controls shows it as a banner and wakes
   the screen: "morning · shower — time's up". Tapping it opens the player.
 - **By default the step waits for you.** It counts into overtime ("+2:14")
