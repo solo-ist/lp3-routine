@@ -78,10 +78,23 @@ early marks the rest *not reached*, not *skipped*.
 A run belongs to the day it **started** in. That day rolls over at 4:00 a.m.,
 so a routine at 1:30 a.m. counts toward the day you think of as today.
 
-## Getting your routines on
+## Making routines
 
-The on-device editor isn't built yet. Until it is, write a file on the
-computer and push it:
+**On the phone.** Tap **+ new routine**, or long-press a routine to edit it.
+
+- Name it with the LightOS keyboard. Names are the only thing you type.
+- **days**: toggle each weekday.
+- **+ add step** asks for a name, then opens the step. Set its length with
+  **−5 −1 +1 +5**. Going down to zero makes it *untimed*: it counts up and
+  waits for *done*.
+- On a step: **move up**, **move down**, **delete step**.
+- **delete routine** removes it from home. Its past runs are kept.
+
+Every change saves as you make it; there's no save button to forget. Runs
+already recorded keep their own copy of names and plans, so editing never
+rewrites history.
+
+**From the computer**, for bulk authoring, write a file and push it:
 
 ```sh
 adb push examples/routines.json /sdcard/Android/data/ist.solo.routine/files/
@@ -144,7 +157,7 @@ so test runs never land in real history.
 
 ## Status
 
-This is Phase 1, the player MVP. Not built yet:
+Built: the player and the on-device editor. Not built yet:
 
 - reminders (Phase 2): local exact alarms, now that there's no sender
-- the on-device editor, streaks, rest days and the calendar (Phase 3)
+- streaks, rest days and the calendar (Phase 3)

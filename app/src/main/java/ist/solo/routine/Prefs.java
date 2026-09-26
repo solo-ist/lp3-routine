@@ -35,6 +35,15 @@ final class Prefs {
         p.edit().putBoolean("keep_screen_on", v).apply();
     }
 
+    /** Whether the starter routine has been added. Once only. */
+    boolean seeded() {
+        return p.getBoolean("seeded", false);
+    }
+
+    void setSeeded() {
+        p.edit().putBoolean("seeded", true).apply();
+    }
+
     /** Whether we've already asked for notification permission, so we ask once. */
     boolean askedNotifications() {
         return p.getBoolean("asked_notifications", false);

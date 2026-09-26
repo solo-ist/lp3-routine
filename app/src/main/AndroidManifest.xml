@@ -30,7 +30,7 @@
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/Routine">
 
         <activity
             android:name=".HomeActivity"
@@ -56,6 +56,21 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:excludeFromRecents="true" />
+
+        <!-- adjustResize keeps the save/cancel bar above the LightOS keyboard. -->
+        <activity
+            android:name=".EditRoutineActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".EditStepActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize" />
 
         <receiver android:name=".StepEndReceiver" android:exported="false" />
 

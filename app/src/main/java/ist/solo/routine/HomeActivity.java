@@ -72,9 +72,25 @@ public class HomeActivity extends Activity {
         super.onResume();
         Store store = new Store(this);
         new Prefs(this).historyStart(System.currentTimeMillis());
-        if (!store.hasRoutines()) store.upsertByName(Templates.morning(), System.currentTimeMillis());
+        seedOnce(store);
         askForNotificationsOnce();
         render();
+    }
+
+    /**
+     * Seed the morning template the first time only — never again, or
+     * deleting it would bring it back.
+     */
+    private void seedOnce(Store store) {
+        Prefs prefs = new Prefs(this);
+        if (prefs.seeded()) return;
+        if (!store.hasRoutines()) store.upsertByName(Templates.morning(), System.currentTimeMillis());
+        prefs.setSeeded();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!Confirm.dismiss(root)) super.onBackPressed();
     }
 
     /**
@@ -112,8 +128,20 @@ public class HomeActivity extends Activity {
         List<RoutineSpec> routines = store.routines();
         for (RoutineSpec r : routines) {
             if (running != null && running.running() && running.routineId == r.id) continue;
-            add(Ui.row(this, r.name, detail(store, r, today)), () -> start(r, running));
+            View row = Ui.row(this, r.name, detail(store, r, today));
+            // A routine with no steps has nothing to start; tapping it edits it.
+            add(row, () -> {
+                if (r.steps.isEmpty()) edit(r.id);
+                else start(r, running);
+            });
+            row.setOnLongClickListener(v -> {
+                Haptics.touch(this);
+                edit(r.id);
+                return true;
+            });
         }
+        add(Ui.row(this, "+ new routine", routines.isEmpty() ? null : "long-press a routine to edit it"),
+                () -> edit(0));
 
         Prefs prefs = new Prefs(this);
         addSetting("auto-next", prefs.autoNext(), () -> prefs.setAutoNext(!prefs.autoNext()));
@@ -146,6 +174,10 @@ public class HomeActivity extends Activity {
 
     private void startNow(RoutineSpec r) {
         if (Runs.start(this, r.id) != null) openPlayer();
+    }
+
+    private void edit(long id) {
+        startActivity(new Intent(this, EditRoutineActivity.class).putExtra(EditRoutineActivity.EXTRA_ID, id));
     }
 
     private void openPlayer() {

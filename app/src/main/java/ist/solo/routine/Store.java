@@ -59,39 +59,76 @@ final class Store {
     long upsertByName(RoutineSpec r, long nowWall) {
         db.beginTransaction();
         try {
-            long id = -1;
-            try (Cursor c = db.rawQuery("SELECT id FROM routine WHERE name = ? AND deleted = 0 LIMIT 1",
-                    new String[] {r.name})) {
-                if (c.moveToFirst()) id = c.getLong(0);
-            }
-            ContentValues v = new ContentValues();
-            v.put("name", r.name);
-            v.put("weekdays", r.weekdays);
-            v.put("target_minute", r.targetMinute);
-            v.put("threshold", r.threshold);
-            if (id < 0) {
-                v.put("created_at", nowWall);
-                id = db.insertOrThrow("routine", null, v);
-            } else {
-                db.update("routine", v, "id = ?", new String[] {Long.toString(id)});
-                db.delete("step", "routine_id = ?", new String[] {Long.toString(id)});
-            }
-            for (int i = 0; i < r.steps.size(); i++) {
-                RoutineSpec.Step s = r.steps.get(i);
-                ContentValues sv = new ContentValues();
-                sv.put("routine_id", id);
-                sv.put("position", i);
-                sv.put("name", s.name);
-                sv.put("duration_sec", s.durationSec);
-                sv.put("detail", s.detail);
-                sv.put("weekday_mask", s.weekdayMask);
-                db.insertOrThrow("step", null, sv);
-            }
+            r.id = idByName(r.name, -1);
+            write(r, nowWall);
             db.setTransactionSuccessful();
-            r.id = id;
-            return id;
+            return r.id;
         } finally {
             db.endTransaction();
+        }
+    }
+
+    /**
+     * Save an edited routine: its fields and its whole step list, replaced
+     * together. A new routine (id 0) is inserted. Past runs are untouched —
+     * they carry their own copy of every name and plan.
+     */
+    long save(RoutineSpec r, long nowWall) {
+        db.beginTransaction();
+        try {
+            if (r.id == 0) r.id = -1;
+            write(r, nowWall);
+            db.setTransactionSuccessful();
+            return r.id;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Hide a routine. Its row stays, so runs that point at it still resolve. */
+    void delete(long id) {
+        ContentValues v = new ContentValues();
+        v.put("deleted", 1);
+        db.update("routine", v, "id = ?", new String[] {Long.toString(id)});
+    }
+
+    /** Whether another live routine already uses this name, ignoring case. */
+    boolean nameTaken(String name, long exceptId) {
+        return idByName(name, exceptId) >= 0;
+    }
+
+    private long idByName(String name, long exceptId) {
+        try (Cursor c = db.rawQuery(
+                "SELECT id FROM routine WHERE name = ? COLLATE NOCASE AND deleted = 0 AND id != ? LIMIT 1",
+                new String[] {name, Long.toString(exceptId)})) {
+            return c.moveToFirst() ? c.getLong(0) : -1;
+        }
+    }
+
+    /** Insert when r.id < 0, else update. Call inside a transaction. */
+    private void write(RoutineSpec r, long nowWall) {
+        ContentValues v = new ContentValues();
+        v.put("name", r.name);
+        v.put("weekdays", r.weekdays);
+        v.put("target_minute", r.targetMinute);
+        v.put("threshold", r.threshold);
+        if (r.id < 0) {
+            v.put("created_at", nowWall);
+            r.id = db.insertOrThrow("routine", null, v);
+        } else {
+            db.update("routine", v, "id = ?", new String[] {Long.toString(r.id)});
+            db.delete("step", "routine_id = ?", new String[] {Long.toString(r.id)});
+        }
+        for (int i = 0; i < r.steps.size(); i++) {
+            RoutineSpec.Step s = r.steps.get(i);
+            ContentValues sv = new ContentValues();
+            sv.put("routine_id", r.id);
+            sv.put("position", i);
+            sv.put("name", s.name);
+            sv.put("duration_sec", s.durationSec);
+            sv.put("detail", s.detail);
+            sv.put("weekday_mask", s.weekdayMask);
+            db.insertOrThrow("step", null, sv);
         }
     }
 

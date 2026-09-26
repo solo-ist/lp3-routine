@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Black and white, like LightOS. Two platform defaults would otherwise
+      leak colour in: the accent (a teal text cursor) and the keyboard-focus
+      highlight, which paints a grey box over a list once the keyboard closes
+      and focus falls back to it.
+    -->
+    <style name="Routine" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorAccent">#FFFFFF</item>
+        <item name="android:colorControlActivated">#FFFFFF</item>
+        <item name="android:defaultFocusHighlightEnabled">false</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>
