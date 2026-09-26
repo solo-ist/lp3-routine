@@ -86,7 +86,7 @@ so a routine at 1:30 a.m. counts toward the day you think of as today.
 - **+ add step** asks for a name, then opens the step. Set its length with
   **−5 −1 +1 +5**. Going down to zero makes it *untimed*: it counts up and
   waits for *done*.
-- On a step: **move up**, **move down**, **delete step**, and **+ next step**,
+- On a step: **move up**, **move down**, **rename**, **delete**, and **+ next step**,
   which adds the next one straight away, so a routine can be entered start to
   finish from one screen.
 - **delete routine** removes it from home. Its past runs are kept.

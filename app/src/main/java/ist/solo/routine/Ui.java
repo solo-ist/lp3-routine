@@ -70,6 +70,12 @@ final class Ui {
         });
     }
 
+    /** Enable or dim a button. Dimmed buttons keep their place and ignore taps. */
+    static void setEnabled(TextView b, boolean on) {
+        b.setEnabled(on);
+        b.setTextColor(on ? Style.FOREGROUND : Style.MUTED);
+    }
+
     /**
      * Turn off the framework's own haptics on a view we buzz for ourselves.
      * Otherwise a long-press plays Android's HEAVY_CLICK on top of our 40 ms

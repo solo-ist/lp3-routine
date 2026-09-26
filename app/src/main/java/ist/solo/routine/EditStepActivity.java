@@ -12,6 +12,11 @@ import android.widget.TextView;
  * One step: its name, and its duration set by tapping ±1 / ±5 minutes rather
  * than typing a number. Down to zero makes it untimed — it counts up and waits
  * for done. Saves on every change.
+ *
+ * Laid out to mirror the player — name, then the big number, centred — so
+ * editing a step looks like the step it will become. Only three text sizes
+ * (detail, name, number) plus one button size, and every control sits on a
+ * centred grid: four columns for the stepper, two for everything else.
  */
 public class EditStepActivity extends Activity {
     static final String EXTRA_ROUTINE = "routine_id";
@@ -21,8 +26,10 @@ public class EditStepActivity extends Activity {
     private TextView position;
     private TextView name;
     private TextView duration;
-    private LinearLayout actions;
+    private TextView up;
+    private TextView down;
     private TextView nextStep;
+    private LinearLayout moves;
     private long routineId;
     private int index;
 
@@ -38,56 +45,48 @@ public class EditStepActivity extends Activity {
         col.setOrientation(LinearLayout.VERTICAL);
         int side = Ui.dp(this, Style.SIDE_PAD_DP);
         col.setPadding(side, Ui.dp(this, 16), side, 0);
+        int gap = Ui.dp(this, Style.GROUP_GAP_DP);
 
         position = Ui.text(this, "", Style.DETAIL_SP, Style.MUTED);
         position.setGravity(Gravity.CENTER);
         col.addView(position, Ui.fill());
 
+        col.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1f));
+
+        // Name and number: the same block the player shows.
         name = Ui.text(this, "", Style.STEP_NAME_SP, Style.FOREGROUND);
         name.setGravity(Gravity.CENTER);
         name.setMaxLines(2);
-        name.setPadding(0, Ui.dp(this, 12), 0, 0);
-        Ui.quiet(name);
-        name.setOnClickListener(v -> {
-            Haptics.touch(this);
-            rename();
-        });
+        Ui.onTap(name, this::rename);
         col.addView(name, Ui.fill());
 
-        TextView hint = Ui.text(this, "tap to rename", Style.DETAIL_SP, Style.MUTED);
-        hint.setGravity(Gravity.CENTER);
-        col.addView(hint, Ui.fill());
-
-        duration = Ui.text(this, "", Style.COUNTDOWN_SP * 0.7f, Style.FOREGROUND);
+        duration = Ui.text(this, "", Style.EDIT_NUMBER_SP, Style.FOREGROUND);
         duration.setGravity(Gravity.CENTER);
-        duration.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 4));
+        duration.setPadding(0, gap / 2, 0, 0);
         col.addView(duration, Ui.fill());
 
-        LinearLayout stepper = new LinearLayout(this);
-        stepper.setOrientation(LinearLayout.HORIZONTAL);
-        stepper.addView(Ui.barButton(this, "−5", v -> nudge(-5)));
-        stepper.addView(Ui.barButton(this, "−1", v -> nudge(-1)));
-        stepper.addView(Ui.barButton(this, "+1", v -> nudge(1)));
-        stepper.addView(Ui.barButton(this, "+5", v -> nudge(5)));
-        col.addView(stepper, Ui.fill());
+        // The stepper touches the number it changes.
+        col.addView(buttons(
+                Ui.barButton(this, "−5", v -> nudge(-5)),
+                Ui.barButton(this, "−1", v -> nudge(-1)),
+                Ui.barButton(this, "+1", v -> nudge(1)),
+                Ui.barButton(this, "+5", v -> nudge(5))), Ui.fill());
 
-        // The actions scroll and take whatever height is left, so the bottom
-        // bar can never be pushed off the 1240px screen — with move up, move
-        // down and delete all showing, it was.
-        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
-        scroll.setVerticalScrollBarEnabled(false);
-        actions = new LinearLayout(this);
-        actions.setOrientation(LinearLayout.VERTICAL);
-        actions.setPadding(0, Ui.dp(this, 8), 0, 0);
-        scroll.addView(actions, Ui.fill());
-        col.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        // Then the step's actions as two pairs. No extra gap: each button's
+        // own padding already spaces the rows evenly, and adding more left a
+        // hole under the stepper.
+        up = Ui.barButton(this, "move up", v -> move(-1));
+        down = Ui.barButton(this, "move down", v -> move(1));
+        moves = buttons(up, down);
+        col.addView(moves, Ui.fill());
+        col.addView(buttons(
+                Ui.barButton(this, "rename", v -> rename()),
+                Ui.barButton(this, "delete", v -> delete())), Ui.fill());
 
-        LinearLayout bar = new LinearLayout(this);
-        bar.setOrientation(LinearLayout.HORIZONTAL);
+        col.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1f));
+
         nextStep = Ui.barButton(this, "+ next step", v -> addNext());
-        bar.addView(nextStep);
-        bar.addView(Ui.barButton(this, "done", v -> finish()));
-        col.addView(bar, Ui.fill());
+        col.addView(buttons(nextStep, Ui.barButton(this, "done", v -> finish())), Ui.fill());
 
         root.addView(col);
         setContentView(root);
@@ -102,6 +101,13 @@ public class EditStepActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (!Confirm.dismiss(root)) finish();
+    }
+
+    private LinearLayout buttons(TextView... bs) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        for (TextView b : bs) row.addView(b);
+        return row;
     }
 
     private RoutineSpec load() {
@@ -124,30 +130,13 @@ public class EditStepActivity extends Activity {
         position.setText(r.name + " · step " + (index + 1) + " of " + r.steps.size());
         name.setText(s.name);
         duration.setText(RoutineSpec.durationLabel(s.durationSec));
-
+        // A direction that doesn't apply is shown dimmed rather than removed,
+        // so the grid stays whole and nothing shifts sideways between steps.
+        // With a single step neither applies, and the row goes entirely.
+        moves.setVisibility(r.steps.size() > 1 ? View.VISIBLE : View.GONE);
+        Ui.setEnabled(up, index > 0);
+        Ui.setEnabled(down, index < r.steps.size() - 1);
         nextStep.setVisibility(r.steps.size() < RoutineSpec.MAX_STEPS ? View.VISIBLE : View.INVISIBLE);
-        actions.removeAllViews();
-        // Up and down share one line, so all three actions fit without
-        // scrolling. An unavailable direction keeps its space, invisible,
-        // so the other doesn't jump sideways between steps.
-        if (r.steps.size() > 1) {
-            LinearLayout moves = new LinearLayout(this);
-            moves.setOrientation(LinearLayout.HORIZONTAL);
-            TextView up = Ui.barButton(this, "move up", v -> move(-1));
-            TextView down = Ui.barButton(this, "move down", v -> move(1));
-            up.setVisibility(index > 0 ? View.VISIBLE : View.INVISIBLE);
-            down.setVisibility(index < r.steps.size() - 1 ? View.VISIBLE : View.INVISIBLE);
-            moves.addView(up);
-            moves.addView(down);
-            actions.addView(moves, Ui.fill());
-        }
-        action("delete step", () -> Confirm.show(root, "delete " + s.name + "?", "keep", "delete", () -> {
-            RoutineSpec fresh = load();
-            if (fresh == null) return;
-            fresh.steps.remove(index);
-            new Store(this).save(fresh, System.currentTimeMillis());
-            finish();
-        }));
     }
 
     private void nudge(int minutes) {
@@ -164,6 +153,18 @@ public class EditStepActivity extends Activity {
             index += by;
             save(r);
         }
+    }
+
+    private void delete() {
+        RoutineSpec r = load();
+        if (r == null) return;
+        Confirm.show(root, "delete " + r.steps.get(index).name + "?", "keep", "delete", () -> {
+            RoutineSpec fresh = load();
+            if (fresh == null) return;
+            fresh.steps.remove(index);
+            new Store(this).save(fresh, System.currentTimeMillis());
+            finish();
+        });
     }
 
     /**
@@ -184,21 +185,12 @@ public class EditStepActivity extends Activity {
     private void rename() {
         RoutineSpec r = load();
         if (r == null) return;
-        Input.show(root, "rename step", r.steps.get(index).name, value -> {
+        Input.show(root, "rename", r.steps.get(index).name, value -> {
             RoutineSpec fresh = load();
             if (fresh == null) return null;
             fresh.steps.get(index).name = value;
             save(fresh);
             return null;
         }, null);
-    }
-
-    private void action(String label, Runnable onTap) {
-        LinearLayout row = Ui.row(this, label, null);
-        row.setOnClickListener(v -> {
-            Haptics.touch(this);
-            onTap.run();
-        });
-        actions.addView(row, Ui.fill());
     }
 }

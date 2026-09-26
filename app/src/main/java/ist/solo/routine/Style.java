@@ -33,6 +33,20 @@ final class Style {
     static final int PROGRESS_HEIGHT_DP = 3;
 
     /**
+     * The step editor's duration. Smaller than the countdown so the widest
+     * value, "180 min" or "untimed", fits the 312dp between the side gutters.
+     */
+    static final float EDIT_NUMBER_SP = 64f;
+
+    /**
+     * Single-item screens (the player, a step) are centred; lists (home, a
+     * routine) are left-aligned rows. On a single-item screen the space
+     * between the name and the number is this; rows of buttons are spaced
+     * by their own padding alone.
+     */
+    static final int GROUP_GAP_DP = 24;
+
+    /**
      * Touch haptic, matched to LightOS by Menu: com.lightos plays a plain
      * createOneShot(40, DEFAULT_AMPLITUDE) with Usage=TOUCH.
      */

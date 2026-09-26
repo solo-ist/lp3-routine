@@ -41,11 +41,14 @@ final class Input {
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView cancel = Ui.barButton(c, "cancel", null);
-        TextView heading = Ui.text(c, title, Style.DETAIL_SP, Style.MUTED);
+        // One size across the row: the title is a muted label between two
+        // buttons, not a smaller heading squeezed between them.
+        TextView heading = Ui.text(c, title, Style.BUTTON_SP, Style.MUTED);
         heading.setGravity(Gravity.CENTER);
+        heading.setSingleLine(true);
         TextView saveButton = Ui.barButton(c, "save", null);
         header.addView(cancel);
-        header.addView(heading, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.4f));
+        header.addView(heading, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         header.addView(saveButton);
         overlay.addView(header, Ui.fill());
 

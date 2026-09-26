@@ -81,7 +81,7 @@ public class EditRoutineActivity extends Activity {
 
     private void askForNewRoutine() {
         title.setText("new routine");
-        Input.show(root, "name the routine", "", name -> {
+        Input.show(root, "name", "", name -> {
             Store store = new Store(this);
             if (store.nameTaken(name, 0)) return "there's already a routine called " + name;
             RoutineSpec r = new RoutineSpec();
@@ -133,7 +133,7 @@ public class EditRoutineActivity extends Activity {
             add(Ui.row(this, s.name, RoutineSpec.durationLabel(s.durationSec)), () -> openStep(index));
         }
         if (r.steps.size() < RoutineSpec.MAX_STEPS) {
-            add(Ui.row(this, "+ add step", null), () -> Input.show(root, "new step", "", name -> {
+            add(Ui.row(this, "+ add step", null), () -> Input.show(root, "step", "", name -> {
                 RoutineSpec fresh = load();
                 fresh.steps.add(new RoutineSpec.Step(name, RoutineSpec.DEFAULT_STEP_SEC));
                 save(fresh);
