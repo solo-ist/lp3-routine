@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(cd "$(dirname "$0")/.." && pwd)"
 
 APK="app/build/outputs/apk/release/app-release.apk"
-: "${ROUTINE_SIGNING_PASSWORD:?set ROUTINE_SIGNING_PASSWORD, e.g. \$(op read \"op://Private/Routine signing key/password\")}"
+: "${ROUTINE_SIGNING_PASSWORD:?set ROUTINE_SIGNING_PASSWORD, e.g. \$(op read \"op://Project/Routine signing key/password\")}"
 
 # Refuse to ship from a dirty tree: the artifact should correspond to a
 # commit, so provenance is checkable after the fact.

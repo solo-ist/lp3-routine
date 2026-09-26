@@ -123,7 +123,7 @@ device transfer.
 Release:
 
 ```sh
-ROUTINE_SIGNING_PASSWORD=$(op read "op://Private/Routine signing key/password") \
+ROUTINE_SIGNING_PASSWORD=$(op read "op://Project/Routine signing key/password") \
   ./scripts/release.sh
 ```
 
