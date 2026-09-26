@@ -25,8 +25,6 @@ most doesn't have to happen on the iPhone.
 - **The summary** shows what actually happened next to what was planned, per
   step. It's not a score, just the real numbers.
 
-The full design, and what changed from it, is in [`docs/PRD.md`](docs/PRD.md).
-
 ## Why it isn't a light-sdk tool
 
 It was meant to be one. The SDK can't do the two things a routine timer
