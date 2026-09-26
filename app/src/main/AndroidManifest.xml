@@ -15,6 +15,12 @@
     <!-- Alarms don't survive a reboot; a run in progress gets its re-armed. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!--
+      "Time's up" when the player isn't on screen. LightOS has no shade, but
+      BrightControl banners notifications and wakes the screen for them.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- No INTERNET. Nothing this app knows ever leaves the phone. -->
 
     <application

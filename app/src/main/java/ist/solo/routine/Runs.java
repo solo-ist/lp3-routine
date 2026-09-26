@@ -86,7 +86,10 @@ final class Runs {
             db.endTransaction();
         }
         StepAlarm.sync(c, r, now);
-        if (alert) Haptics.stepEnd(c);
+        if (alert) {
+            Haptics.stepEnd(c);
+            if (!PlayerActivity.visible) StepNotice.post(c, r);
+        }
         return r;
     }
 

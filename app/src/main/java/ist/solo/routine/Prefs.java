@@ -13,9 +13,13 @@ final class Prefs {
         p = c.getSharedPreferences(FILE, Context.MODE_PRIVATE);
     }
 
-    /** When a timed step runs out, move on by itself. Off: count into overtime. */
+    /**
+     * When a timed step runs out, move on by itself. Off (the default): buzz,
+     * then count into overtime until you tap done — so a step never slips by
+     * while you weren't looking.
+     */
     boolean autoNext() {
-        return p.getBoolean("auto_next", true);
+        return p.getBoolean("auto_next", false);
     }
 
     void setAutoNext(boolean v) {
@@ -29,6 +33,15 @@ final class Prefs {
 
     void setKeepScreenOn(boolean v) {
         p.edit().putBoolean("keep_screen_on", v).apply();
+    }
+
+    /** Whether we've already asked for notification permission, so we ask once. */
+    boolean askedNotifications() {
+        return p.getBoolean("asked_notifications", false);
+    }
+
+    void setAskedNotifications() {
+        p.edit().putBoolean("asked_notifications", true).apply();
     }
 
     /**

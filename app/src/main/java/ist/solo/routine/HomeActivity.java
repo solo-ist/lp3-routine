@@ -1,6 +1,8 @@
 package ist.solo.routine;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -71,7 +73,21 @@ public class HomeActivity extends Activity {
         Store store = new Store(this);
         new Prefs(this).historyStart(System.currentTimeMillis());
         if (!store.hasRoutines()) store.upsertByName(Templates.morning(), System.currentTimeMillis());
+        askForNotificationsOnce();
         render();
+    }
+
+    /**
+     * Step-end notices need POST_NOTIFICATIONS, a runtime permission on
+     * Android 13+. Ask once; if refused, the buzz still works.
+     */
+    private void askForNotificationsOnce() {
+        Prefs prefs = new Prefs(this);
+        if (prefs.askedNotifications()) return;
+        prefs.setAskedNotifications();
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, 1);
+        }
     }
 
     void render() {

@@ -24,6 +24,9 @@ public class PlayerActivity extends Activity {
 
     private static final long MINUTE = 60_000L;
 
+    /** Whether the player is on screen, so a step end knows if it needs a notification. */
+    static volatile boolean visible;
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable tick = this::tick;
 
@@ -110,6 +113,8 @@ public class PlayerActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        visible = true;
+        StepNotice.cancel(this);
         if (new Prefs(this).keepScreenOn()) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         tick();
@@ -118,6 +123,7 @@ public class PlayerActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        visible = false;
         handler.removeCallbacks(tick);
     }
 

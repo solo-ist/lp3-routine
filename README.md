@@ -13,9 +13,13 @@ most doesn't have to happen on the iPhone.
   - **skip**
   - **done**
   - **Back** asks whether to end the routine.
-- **When a step runs out** the phone buzzes (three firm pulses) and moves on,
-  whether the screen is on or not. With *auto-next* off it buzzes once and
-  counts into overtime instead ("+2:14").
+- **When a step runs out** the phone buzzes (three firm pulses) whether the
+  screen is on or not. If the player isn't in front, a notification also
+  appears. LightOS has no shade, but Controls shows it as a banner and wakes
+  the screen: "morning · shower — time's up". Tapping it opens the player.
+- **By default the step waits for you.** It counts into overtime ("+2:14")
+  until you tap *done*, so nothing slips by while you weren't looking. Turn
+  *auto-next* on to have timed steps advance by themselves.
 - **Untimed steps** count up and advance only on *done*.
 - **The summary** shows what actually happened next to what was planned, per
   step. It's not a score, just the real numbers.
@@ -108,6 +112,7 @@ A file that fails any check is rejected whole.
 | `VIBRATE` | The step-end buzz, and the touch tick matched to LightOS |
 | `USE_EXACT_ALARM` | The buzz on time with the screen off. Granted at install. |
 | `RECEIVE_BOOT_COMPLETED` | Re-arms a run in progress after a reboot |
+| `POST_NOTIFICATIONS` | "Time's up" when the player isn't on screen. Asked once; if refused, the buzz still works. |
 
 No `INTERNET`: nothing Routine knows ever leaves the phone. `allowBackup` is
 off, and data-extraction rules exclude everything from both cloud backup and
