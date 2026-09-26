@@ -7,7 +7,8 @@ most doesn't have to happen on the iPhone.
 - **Home** lists your routines. Tap one and the first step is already
   running. That's two taps from the toolbox.
 - **The player** shows one step: its name, the time left, a thin progress
-  line, and what's next. Nothing else of the routine is visible, on purpose.
+  line, what's next, and **when you'll be done** if the rest goes to plan.
+  That estimate is live: pausing, adding time or running over moves it. Nothing else of the routine is visible, on purpose.
   - **pause / resume**
   - **+1** (long-press for **+5**)
   - **skip**

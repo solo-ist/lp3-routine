@@ -200,6 +200,20 @@ final class RunState {
         return ms;
     }
 
+    /**
+     * Wall-clock time the routine will end if everything from here goes to
+     * plan: what's left of this step plus every later step's plan. A step
+     * already over time contributes nothing more — it ends when you tap done.
+     * Untimed steps have no plan and add nothing, so while one is running the
+     * estimate slides later with it, which is the truth.
+     */
+    long finishAt(Now now) {
+        long ms = 0;
+        if (timer.timed()) ms += Math.max(0, timer.remainingMs(now));
+        for (int i = current + 1; i < steps.size(); i++) ms += steps.get(i).plannedMs;
+        return now.wall + ms;
+    }
+
     long actualMs() {
         long ms = 0;
         for (Step s : steps) ms += s.activeMs;

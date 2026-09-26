@@ -127,6 +127,31 @@ public class RunStateTest {
     }
 
     @Test
+    public void finishIsNowPlusWhatsLeftPlusLaterPlans() {
+        RunState r = start(routine(5, 10, 3));
+        Now later = t0.plus(2 * MIN);
+        assertEquals(later.wall + 3 * MIN + 13 * MIN, r.finishAt(later));
+    }
+
+    @Test
+    public void finishSlidesWhilePausedOrOverTime() {
+        RunState r = start(routine(5, 10));
+        r.pause(t0.plus(MIN));
+        // Paused: nothing is being used up, so the finish moves with the clock.
+        assertEquals(t0.wall + 10 * MIN + 4 * MIN + 10 * MIN, r.finishAt(t0.plus(10 * MIN)));
+        r.resume(t0.plus(10 * MIN));
+        // Over time with auto-next off: the current step adds nothing more.
+        r.advanceIfDue(t0.plus(20 * MIN), false);
+        assertEquals(t0.wall + 20 * MIN + 10 * MIN, r.finishAt(t0.plus(20 * MIN)));
+    }
+
+    @Test
+    public void untimedStepsAddNothingToTheFinish() {
+        RunState r = start(routine(0, 5));
+        assertEquals(t0.wall + 7 * MIN + 5 * MIN, r.finishAt(t0.plus(7 * MIN)));
+    }
+
+    @Test
     public void pausingStopsTheStepFromEnding() {
         RunState r = start(routine(1, 1));
         r.pause(t0.plus(30_000));

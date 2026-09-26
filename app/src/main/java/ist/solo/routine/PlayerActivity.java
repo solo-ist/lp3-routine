@@ -36,6 +36,7 @@ public class PlayerActivity extends Activity {
     private TextView countdown;
     private ProgressLine progress;
     private TextView next;
+    private TextView finish;
     private TextView pause;
     private TextView plus;
 
@@ -78,6 +79,11 @@ public class PlayerActivity extends Activity {
         next.setGravity(Gravity.CENTER);
         next.setPadding(0, Ui.dp(this, 16), 0, 0);
         col.addView(next, Ui.fill());
+
+        finish = Ui.text(this, "", Style.DETAIL_SP, Style.MUTED);
+        finish.setGravity(Gravity.CENTER);
+        finish.setPadding(0, Ui.dp(this, 4), 0, 0);
+        col.addView(finish, Ui.fill());
 
         col.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1f));
 
@@ -174,6 +180,9 @@ public class PlayerActivity extends Activity {
         name.setText(step.name);
         RunState.Step n = r.next();
         next.setText(n == null ? "last step" : "next: " + n.name);
+        // Recomputed every tick: pausing, adding time or running over moves it.
+        finish.setText("done at " + Format.timeOfDay(r.finishAt(now), java.time.ZoneId.systemDefault(),
+                android.text.format.DateFormat.is24HourFormat(this)));
         pause.setText(paused ? "resume" : "pause");
         countdown.setTextColor(paused ? Style.MUTED : Style.FOREGROUND);
 

@@ -20,6 +20,17 @@ final class Format {
         return "+" + elapsed(overMs);
     }
 
+    /**
+     * A time of day in the phone's own 12/24-hour style: "7:52", "19:52",
+     * "7:52 pm". Lowercase am/pm, like the rest of the app.
+     */
+    static String timeOfDay(long wallMs, java.time.ZoneId zone, boolean h24) {
+        java.time.LocalTime t = java.time.Instant.ofEpochMilli(wallMs).atZone(zone).toLocalTime();
+        if (h24) return String.format(java.util.Locale.ROOT, "%d:%02d", t.getHour(), t.getMinute());
+        int h = t.getHour() % 12 == 0 ? 12 : t.getHour() % 12;
+        return String.format(java.util.Locale.ROOT, "%d:%02d %s", h, t.getMinute(), t.getHour() < 12 ? "am" : "pm");
+    }
+
     /** "25 min", "1 h 5 min", "45 s" for plans and totals. */
     static String minutes(long ms) {
         long s = Math.round(ms / 1000.0);
