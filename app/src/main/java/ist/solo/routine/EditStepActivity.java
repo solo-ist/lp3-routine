@@ -22,6 +22,7 @@ public class EditStepActivity extends Activity {
     private TextView name;
     private TextView duration;
     private LinearLayout actions;
+    private TextView nextStep;
     private long routineId;
     private int index;
 
@@ -45,7 +46,7 @@ public class EditStepActivity extends Activity {
         name = Ui.text(this, "", Style.STEP_NAME_SP, Style.FOREGROUND);
         name.setGravity(Gravity.CENTER);
         name.setMaxLines(2);
-        name.setPadding(0, Ui.dp(this, 24), 0, 0);
+        name.setPadding(0, Ui.dp(this, 12), 0, 0);
         Ui.quiet(name);
         name.setOnClickListener(v -> {
             Haptics.touch(this);
@@ -59,7 +60,7 @@ public class EditStepActivity extends Activity {
 
         duration = Ui.text(this, "", Style.COUNTDOWN_SP * 0.7f, Style.FOREGROUND);
         duration.setGravity(Gravity.CENTER);
-        duration.setPadding(0, Ui.dp(this, 24), 0, Ui.dp(this, 8));
+        duration.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 4));
         col.addView(duration, Ui.fill());
 
         LinearLayout stepper = new LinearLayout(this);
@@ -70,15 +71,21 @@ public class EditStepActivity extends Activity {
         stepper.addView(Ui.barButton(this, "+5", v -> nudge(5)));
         col.addView(stepper, Ui.fill());
 
+        // The actions scroll and take whatever height is left, so the bottom
+        // bar can never be pushed off the 1240px screen — with move up, move
+        // down and delete all showing, it was.
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(false);
         actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.VERTICAL);
-        actions.setPadding(0, Ui.dp(this, 16), 0, 0);
-        col.addView(actions, Ui.fill());
-
-        col.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1f));
+        actions.setPadding(0, Ui.dp(this, 8), 0, 0);
+        scroll.addView(actions, Ui.fill());
+        col.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
+        nextStep = Ui.barButton(this, "+ next step", v -> addNext());
+        bar.addView(nextStep);
         bar.addView(Ui.barButton(this, "done", v -> finish()));
         col.addView(bar, Ui.fill());
 
@@ -118,9 +125,22 @@ public class EditStepActivity extends Activity {
         name.setText(s.name);
         duration.setText(RoutineSpec.durationLabel(s.durationSec));
 
+        nextStep.setVisibility(r.steps.size() < RoutineSpec.MAX_STEPS ? View.VISIBLE : View.INVISIBLE);
         actions.removeAllViews();
-        if (index > 0) action("move up", () -> move(-1));
-        if (index < r.steps.size() - 1) action("move down", () -> move(1));
+        // Up and down share one line, so all three actions fit without
+        // scrolling. An unavailable direction keeps its space, invisible,
+        // so the other doesn't jump sideways between steps.
+        if (r.steps.size() > 1) {
+            LinearLayout moves = new LinearLayout(this);
+            moves.setOrientation(LinearLayout.HORIZONTAL);
+            TextView up = Ui.barButton(this, "move up", v -> move(-1));
+            TextView down = Ui.barButton(this, "move down", v -> move(1));
+            up.setVisibility(index > 0 ? View.VISIBLE : View.INVISIBLE);
+            down.setVisibility(index < r.steps.size() - 1 ? View.VISIBLE : View.INVISIBLE);
+            moves.addView(up);
+            moves.addView(down);
+            actions.addView(moves, Ui.fill());
+        }
         action("delete step", () -> Confirm.show(root, "delete " + s.name + "?", "keep", "delete", () -> {
             RoutineSpec fresh = load();
             if (fresh == null) return;
@@ -144,6 +164,21 @@ public class EditStepActivity extends Activity {
             index += by;
             save(r);
         }
+    }
+
+    /**
+     * Insert a new step right after this one and move on to it — so a
+     * routine can be entered start to finish without leaving this screen.
+     */
+    private void addNext() {
+        Input.show(root, "next step", "", value -> {
+            RoutineSpec r = load();
+            if (r == null || r.steps.size() >= RoutineSpec.MAX_STEPS) return null;
+            r.steps.add(index + 1, new RoutineSpec.Step(value, RoutineSpec.DEFAULT_STEP_SEC));
+            index += 1;
+            save(r);
+            return null;
+        }, null);
     }
 
     private void rename() {
