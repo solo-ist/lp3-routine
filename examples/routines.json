@@ -1,0 +1,29 @@
+{
+  "v": 1,
+  "routines": [
+    {
+      "name": "morning",
+      "weekdays": ["mon", "tue", "wed", "thu", "fri"],
+      "target": "07:30",
+      "threshold": 100,
+      "steps": [
+        { "name": "glass of water", "min": 2 },
+        { "name": "stretch", "min": 5 },
+        { "name": "shower", "min": 10 },
+        { "name": "get dressed", "min": 5 },
+        { "name": "breakfast", "min": 15 },
+        { "name": "look at today", "min": 3 },
+        { "name": "pack bag" }
+      ]
+    },
+    {
+      "name": "wind-down",
+      "target": "22:30",
+      "steps": [
+        { "name": "phone on charger", "min": 1 },
+        { "name": "tidy one surface", "min": 5 },
+        { "name": "read", "min": 20 }
+      ]
+    }
+  ]
+}

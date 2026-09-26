@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The step-end buzz, and the touch tick matched to LightOS. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--
+      One exact alarm per step end, so the buzz arrives on time with the
+      screen off or the app dead. USE_EXACT_ALARM is granted at install;
+      Play restricts it to clock and timer apps, which this is, and this is
+      sideloaded regardless.
+    -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Alarms don't survive a reboot; a run in progress gets its re-armed. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- No INTERNET. Nothing this app knows ever leaves the phone. -->
+
+    <application
+        android:label="@string/app_label"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+
+        <activity
+            android:name=".HomeActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true" />
+
+        <activity
+            android:name=".SummaryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true" />
+
+        <receiver android:name=".StepEndReceiver" android:exported="false" />
+
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+          Marks this as a LightOS "tool" so it survives the toolbox filter when
+          external tools are off. Undocumented; may break.
+        -->
+        <receiver
+            android:name=".SdkMarkerReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.thelightphone.sdk.ACTION_SDK_MARKER" />
+            </intent-filter>
+            <meta-data
+                android:name="com.thelightphone.sdk.SDK_VERSION"
+                android:value="0.1.1" />
+        </receiver>
+    </application>
+</manifest>
