@@ -41,6 +41,13 @@ final class ImportParser {
 
     static final int MAX_BYTES = 64 * 1024;
     static final int MAX_ROUTINES = 50;
+    /**
+     * The format is three levels deep ({routines: [{steps: [{…}]}]}), so 8 is
+     * generous. The JSON tokenizer recurses per level, and a 64 KB file can
+     * nest thousands deep: without this, an unknown field could overflow the
+     * stack before shape validation ever ran (security audit 2026-09-27).
+     */
+    static final int MAX_DEPTH = 8;
     private static final String[] DAYS = {"mon", "tue", "wed", "thu", "fri", "sat", "sun"};
 
     static final class ImportException extends Exception {
@@ -51,10 +58,13 @@ final class ImportParser {
 
     static List<RoutineSpec> parse(String text) throws ImportException {
         if (text.length() > MAX_BYTES) throw new ImportException("file is over 64 KB");
+        if (depth(text) > MAX_DEPTH) throw new ImportException("nested more than " + MAX_DEPTH + " levels deep");
         try {
             JSONObject root = new JSONObject(text);
-            int v = root.optInt("v", 1);
-            if (v != 1) throw new ImportException("unsupported version " + v);
+            if (root.has("v")) {
+                long v = integer(root, "v", 1, Integer.MAX_VALUE, "file");
+                if (v != 1) throw new ImportException("unsupported version " + v);
+            }
             JSONArray arr = root.getJSONArray("routines");
             if (arr.length() == 0) throw new ImportException("no routines");
             if (arr.length() > MAX_ROUTINES) throw new ImportException("more than " + MAX_ROUTINES + " routines");
@@ -63,7 +73,59 @@ final class ImportParser {
             return out;
         } catch (JSONException e) {
             throw new ImportException("not valid routine json: " + e.getMessage());
+        } catch (RuntimeException | StackOverflowError e) {
+            // Belt and braces: a parser failure must end in "can't import"
+            // with a discard button, never a crash on every launch.
+            throw new ImportException("not valid routine json");
         }
+    }
+
+    /**
+     * Deepest nesting of objects and arrays, counted without parsing — the
+     * point is to refuse before the recursive parser sees the text. Brackets
+     * inside strings don't count.
+     */
+    static int depth(String text) {
+        int depth = 0, max = 0;
+        boolean inString = false, escaped = false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (inString) {
+                if (escaped) escaped = false;
+                else if (c == '\\') escaped = true;
+                else if (c == '"') inString = false;
+            } else if (c == '"') {
+                inString = true;
+            } else if (c == '{' || c == '[') {
+                max = Math.max(max, ++depth);
+            } else if (c == '}' || c == ']') {
+                depth--;
+            }
+        }
+        return max;
+    }
+
+    /**
+     * A JSON number, checked for type and finiteness before anything else
+     * touches it. org.json's getInt/getDouble coerce strings and silently
+     * truncate, and narrowing before a range check is how 71582789 minutes
+     * became a valid 44 seconds (security audit 2026-09-27, R-03).
+     */
+    private static double number(JSONObject o, String key, String where) throws JSONException, ImportException {
+        Object v = o.get(key);
+        if (!(v instanceof Number)) throw new ImportException(where + ": " + key + " must be a number");
+        double d = ((Number) v).doubleValue();
+        if (Double.isNaN(d) || Double.isInfinite(d)) throw new ImportException(where + ": " + key + " is out of range");
+        return d;
+    }
+
+    /** A whole number in [min, max], validated before narrowing. */
+    private static long integer(JSONObject o, String key, long min, long max, String where)
+            throws JSONException, ImportException {
+        double d = number(o, key, where);
+        if (d != Math.rint(d)) throw new ImportException(where + ": " + key + " must be a whole number");
+        if (d < min || d > max) throw new ImportException(where + ": " + key + " must be " + min + "–" + max);
+        return (long) d;
     }
 
     private static RoutineSpec routine(JSONObject o, int n) throws JSONException, ImportException {
@@ -83,8 +145,7 @@ final class ImportParser {
         String target = o.optString("target", "");
         if (!target.isEmpty()) r.targetMinute = time(target, where);
 
-        r.threshold = o.optInt("threshold", 100);
-        if (r.threshold < 1 || r.threshold > 100) throw new ImportException(where + ": threshold must be 1–100");
+        if (o.has("threshold")) r.threshold = (int) integer(o, "threshold", 1, 100, where);
 
         JSONArray steps = o.getJSONArray("steps");
         if (steps.length() < 1 || steps.length() > RoutineSpec.MAX_STEPS) {
@@ -93,14 +154,19 @@ final class ImportParser {
         for (int i = 0; i < steps.length(); i++) {
             JSONObject s = steps.getJSONObject(i);
             String sn = name(s.getString("name"), where + " step " + (i + 1));
+            String at = where + ", " + sn;
             int sec;
-            if (s.has("min") && s.has("sec")) throw new ImportException(where + ", " + sn + ": give min or sec, not both");
-            else if (s.has("min")) sec = (int) Math.round(s.getDouble("min") * 60);
-            else if (s.has("sec")) sec = s.getInt("sec");
-            else sec = 0;
-            if (sec < 0 || sec > RoutineSpec.MAX_STEP_MINUTES * 60) {
-                throw new ImportException(where + ", " + sn + ": duration must be 0–" + RoutineSpec.MAX_STEP_MINUTES + " min");
-            }
+            if (s.has("min") && s.has("sec")) throw new ImportException(at + ": give min or sec, not both");
+            else if (s.has("min")) {
+                // Range-check the minutes themselves, then convert.
+                double min = number(s, "min", at);
+                if (min < 0 || min > RoutineSpec.MAX_STEP_MINUTES) {
+                    throw new ImportException(at + ": duration must be 0–" + RoutineSpec.MAX_STEP_MINUTES + " min");
+                }
+                sec = (int) Math.round(min * 60);
+            } else if (s.has("sec")) {
+                sec = (int) integer(s, "sec", 0, RoutineSpec.MAX_STEP_MINUTES * 60L, at);
+            } else sec = 0;
             RoutineSpec.Step step = new RoutineSpec.Step(sn, sec);
             String detail = s.optString("detail", "").trim();
             if (!detail.isEmpty()) step.detail = detail.length() > 120 ? detail.substring(0, 120) : detail;

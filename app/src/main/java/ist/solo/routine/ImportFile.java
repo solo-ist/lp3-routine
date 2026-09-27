@@ -3,9 +3,10 @@ package ist.solo.routine;
 import android.content.Context;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 
 /**
@@ -36,12 +37,17 @@ final class ImportFile {
     }
 
     List<RoutineSpec> read() throws ImportParser.ImportException {
-        if (file.length() > ImportParser.MAX_BYTES) throw new ImportParser.ImportException("file is over 64 KB");
-        try {
-            return ImportParser.parse(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+        // Read at most one byte past the limit, rather than trusting a length
+        // checked before the read: the file could grow in between.
+        byte[] buf = new byte[ImportParser.MAX_BYTES + 1];
+        int n = 0;
+        try (InputStream in = new FileInputStream(file)) {
+            for (int r; n < buf.length && (r = in.read(buf, n, buf.length - n)) > 0; ) n += r;
         } catch (IOException e) {
             throw new ImportParser.ImportException("couldn't read " + NAME + ": " + e.getMessage());
         }
+        if (n > ImportParser.MAX_BYTES) throw new ImportParser.ImportException("file is over 64 KB");
+        return ImportParser.parse(new String(buf, 0, n, StandardCharsets.UTF_8));
     }
 
     void discard() {
