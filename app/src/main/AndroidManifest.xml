@@ -21,7 +21,11 @@
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- No INTERNET. Nothing this app knows ever leaves the phone. -->
+    <!--
+      No INTERNET: this app can't send anything off the phone itself. Step
+      names do reach Android's notification system (StepNotice), where
+      notification listeners can read them.
+    -->
 
     <application
         android:label="@string/app_label"

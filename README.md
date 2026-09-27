@@ -129,9 +129,16 @@ A file that fails any check is rejected whole.
 | `RECEIVE_BOOT_COMPLETED` | Re-arms a run in progress after a reboot |
 | `POST_NOTIFICATIONS` | "Time's up" when the player isn't on screen. Asked once; if refused, the buzz still works. |
 
-No `INTERNET`: nothing Routine knows ever leaves the phone. `allowBackup` is
-off, and data-extraction rules exclude everything from both cloud backup and
-device transfer.
+No `INTERNET`: Routine itself has no way to send anything off the phone.
+`allowBackup` is off, and data-extraction rules exclude everything from both
+cloud backup and device transfer. The release gate checks all three in the
+built APK.
+
+That isn't the same as "nothing leaves Routine". A step-end notice hands the
+routine and step names to Android's notification system, where anything with
+notification access can read them: BrightControl, which shows the banner, and
+the Notifications tool. What you type goes through the keyboard app. Those
+are the phone's own trust boundaries, and Routine can't narrow them.
 
 ## Build
 

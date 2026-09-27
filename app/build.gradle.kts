@@ -8,8 +8,8 @@ android {
         applicationId = "ist.solo.routine"
         minSdk = 34
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.4.1"
+        versionCode = 8
+        versionName = "0.4.2"
         resValue("string", "app_label", "Routine")
     }
 
